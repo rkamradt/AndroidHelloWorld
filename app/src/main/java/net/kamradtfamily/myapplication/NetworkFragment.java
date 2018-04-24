@@ -7,6 +7,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,6 +31,7 @@ public class NetworkFragment  extends Fragment {
      * from.
      */
     public static NetworkFragment getInstance(NetworkActivity activity, String url) {
+        Log.i(TAG, "creating a new NetworkFragment");
         NetworkFragment networkFragment = new NetworkFragment();
         networkFragment.activity = activity;
         Bundle args = new Bundle();
@@ -120,15 +122,18 @@ public class NetworkFragment  extends Fragment {
          */
         @Override
         protected void onPreExecute() {
+            Log.i(TAG, "in onPreExecute mCallback = " + mCallback);
             if (mCallback != null) {
                 NetworkInfo networkInfo = mCallback.getActiveNetworkInfo();
                 if (networkInfo == null || !networkInfo.isConnected() ||
                         (networkInfo.getType() != ConnectivityManager.TYPE_WIFI
                                 && networkInfo.getType() != ConnectivityManager.TYPE_MOBILE)) {
+                    Log.i(TAG, "in onPreExecute no connectivity, cancelling");
                     // If no connectivity, cancel task and update Callback with null data.
                     mCallback.updateFromDownload(null);
                     cancel(true);
                 }
+                Log.i(TAG, "in onPreExecute fall through ");
             }
         }
 
@@ -182,6 +187,7 @@ public class NetworkFragment  extends Fragment {
          * it will throw an IOException.
          */
         private String downloadUrl(URL url) throws IOException {
+            Log.i(TAG, "in downloadURL url = " +  url.toString());
             Reader stream = null;
             HttpsURLConnection connection = null;
             String result = null;
