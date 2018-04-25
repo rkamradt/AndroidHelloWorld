@@ -9,6 +9,7 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
@@ -30,7 +31,7 @@ public class NetworkActivity extends FragmentActivity implements DownloadCallbac
         setContentView(R.layout.activity_network);
 
         Log.i(LogTag, "in onCreate");
-        mNetworkFragment = NetworkFragment.getInstance(this, "https://www.google.com");
+        mNetworkFragment = NetworkFragment.getInstance(getFragmentManager(), "https://www.google.com");
     }
 
     /** Called when the user taps the Send button */
@@ -41,11 +42,17 @@ public class NetworkActivity extends FragmentActivity implements DownloadCallbac
             mDownloading = true;
         }
     }
-    private void startDownload() {
-    }
 
     @Override
-    public void updateFromDownload(Object result) {
+    public void updateFromDownload(Object obj) {
+        Log.i(LogTag, "in updateFromDownload");
+        NetworkFragment.DownloadTask.Result result = (NetworkFragment.DownloadTask.Result) obj;
+        if(result.mException != null) {
+            Log.e(LogTag, "in updateFromDownload exception = " + result.mException, result.mException);
+        }
+        Log.i(LogTag, "in updateFromDownload result = " + result.mResultValue);
+        TextView textView = findViewById(R.id.textView2);
+        textView.setText(result.mResultValue);
 
     }
 
@@ -54,33 +61,38 @@ public class NetworkActivity extends FragmentActivity implements DownloadCallbac
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        Log.i(LogTag, "in getActiveNetworkInfo networkInfo = " + networkInfo);
         return networkInfo;
     }
 
     @Override
     public void onProgressUpdate(int progressCode, int percentComplete) {
+        TextView textView = findViewById(R.id.textView2);
+        Log.i(LogTag, "in onProgressUpdate progressCode = " + progressCode + " percentComplete = " + percentComplete);
+
         switch(progressCode) {
             // You can add UI behavior for progress updates here.
             case Progress.ERROR:
-                Log.i(LogTag, "in onProgressUpdate ERROR");
+                textView.setText("in onProgressUpdate ERROR");
                 break;
             case Progress.CONNECT_SUCCESS:
-                Log.i(LogTag, "in onProgressUpdate CONNECT_SUCCESS");
+                textView.setText("in onProgressUpdate CONNECT_SUCCESS");
                 break;
             case Progress.GET_INPUT_STREAM_SUCCESS:
-                Log.i(LogTag, "in onProgressUpdate GET_INPUT_STREAM_SUCCESS");
+                textView.setText("in onProgressUpdate GET_INPUT_STREAM_SUCCESS");
                 break;
             case Progress.PROCESS_INPUT_STREAM_IN_PROGRESS:
-                Log.i(LogTag, "in onProgressUpdate PROCESS_INPUT_STREAM_IN_PROGRESS");
+                textView.setText("in onProgressUpdate PROCESS_INPUT_STREAM_IN_PROGRESS");
                 break;
             case Progress.PROCESS_INPUT_STREAM_SUCCESS:
-                Log.i(LogTag, "in onProgressUpdate PROCESS_INPUT_STREAM_SUCCESS");
+                textView.setText("in onProgressUpdate PROCESS_INPUT_STREAM_SUCCESS");
                 break;
         }
     }
 
     @Override
     public void finishDownloading() {
+        Log.i(LogTag, "in finishDownloading mNetworkFragment = " + mNetworkFragment);
         mDownloading = false;
         if (mNetworkFragment != null) {
             mNetworkFragment.cancelDownload();

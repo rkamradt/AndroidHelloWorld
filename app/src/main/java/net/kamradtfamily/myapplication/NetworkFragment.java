@@ -1,6 +1,7 @@
 package net.kamradtfamily.myapplication;
 
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -21,8 +22,7 @@ public class NetworkFragment  extends Fragment {
 
     private static final String URL_KEY = "UrlKey";
 
-    private DownloadCallback mCallback;
-    private NetworkActivity activity;
+    private DownloadCallback<DownloadTask.Result> mCallback;
     private DownloadTask mDownloadTask;
     private String mUrlString;
 
@@ -30,14 +30,13 @@ public class NetworkFragment  extends Fragment {
      * Static initializer for NetworkFragment that sets the URL of the host it will be downloading
      * from.
      */
-    public static NetworkFragment getInstance(NetworkActivity activity, String url) {
+    public static NetworkFragment getInstance(FragmentManager manager, String url) {
         Log.i(TAG, "creating a new NetworkFragment");
         NetworkFragment networkFragment = new NetworkFragment();
-        networkFragment.activity = activity;
         Bundle args = new Bundle();
         args.putString(URL_KEY, url);
         networkFragment.setArguments(args);
-        activity.getFragmentManager().beginTransaction().add(networkFragment, TAG).commit();
+        manager.beginTransaction().add(networkFragment, TAG).commit();
         return networkFragment;
     }
 
@@ -73,7 +72,7 @@ public class NetworkFragment  extends Fragment {
      */
     public void startDownload() {
         cancelDownload();
-        mDownloadTask = new DownloadTask(activity);
+        mDownloadTask = new DownloadTask();
         mDownloadTask.execute(mUrlString);
     }
 
@@ -89,24 +88,14 @@ public class NetworkFragment  extends Fragment {
     /**
      * Implementation of AsyncTask designed to fetch data from the network.
      */
-    private class DownloadTask extends AsyncTask<String, Integer, DownloadTask.Result> {
-
-        private DownloadCallback<String> mCallback;
-
-        DownloadTask(DownloadCallback<String> callback) {
-            setCallback(callback);
-        }
-
-        void setCallback(DownloadCallback<String> callback) {
-            mCallback = callback;
-        }
+    public class DownloadTask extends AsyncTask<String, Integer, DownloadTask.Result> {
 
         /**
          * Wrapper class that serves as a union of a result value and an exception. When the download
          * task has completed, either the result value or exception can be a non-null value.
          * This allows you to pass exceptions to the UI thread that were thrown during doInBackground().
          */
-        class Result {
+        public class Result {
             public String mResultValue;
             public Exception mException;
             public Result(String resultValue) {
@@ -142,9 +131,11 @@ public class NetworkFragment  extends Fragment {
          */
         @Override
         protected DownloadTask.Result doInBackground(String... urls) {
+            Log.i(TAG, "in doInBackground ");
             Result result = null;
             if (!isCancelled() && urls != null && urls.length > 0) {
                 String urlString = urls[0];
+                Log.i(TAG, "in doInBackground url[0] = " + urlString);
                 try {
                     URL url = new URL(urlString);
                     String resultString = downloadUrl(url);
@@ -165,12 +156,9 @@ public class NetworkFragment  extends Fragment {
          */
         @Override
         protected void onPostExecute(Result result) {
+            Log.i(TAG, "in onPostExecute ");
             if (result != null && mCallback != null) {
-                if (result.mException != null) {
-                    mCallback.updateFromDownload(result.mException.getMessage());
-                } else if (result.mResultValue != null) {
-                    mCallback.updateFromDownload(result.mResultValue);
-                }
+                mCallback.updateFromDownload(result);
                 mCallback.finishDownloading();
             }
         }
