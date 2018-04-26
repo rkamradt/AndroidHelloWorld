@@ -31,7 +31,7 @@ public class NetworkActivity extends FragmentActivity implements DownloadCallbac
         setContentView(R.layout.activity_network);
 
         Log.i(LogTag, "in onCreate");
-        mNetworkFragment = NetworkFragment.getInstance(getFragmentManager(), "https://www.google.com");
+        mNetworkFragment = NetworkFragment.getInstance(getFragmentManager(), "https://api.rlksr.com/");
     }
 
     /** Called when the user taps the Send button */
@@ -47,12 +47,14 @@ public class NetworkActivity extends FragmentActivity implements DownloadCallbac
     public void updateFromDownload(Object obj) {
         Log.i(LogTag, "in updateFromDownload");
         NetworkFragment.DownloadTask.Result result = (NetworkFragment.DownloadTask.Result) obj;
-        if(result.mException != null) {
-            Log.e(LogTag, "in updateFromDownload exception = " + result.mException, result.mException);
-        }
-        Log.i(LogTag, "in updateFromDownload result = " + result.mResultValue);
         TextView textView = findViewById(R.id.textView2);
-        textView.setText(result.mResultValue);
+        if(result.mException != null) {
+            Log.w(LogTag, "in updateFromDownload exception = " + result.mException);
+            textView.setText(result.mException.getMessage());
+        } else {
+            Log.i(LogTag, "in updateFromDownload result = " + result.mResultValue);
+            textView.setText(result.mResultValue);
+        }
 
     }
 
